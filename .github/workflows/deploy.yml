@@ -1,18 +1,40 @@
 name: Deploy to DigitalOcean
+
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    
     steps:
-      - name: Deploy via SSH
+      - name: 🚀 Deploy via SSH
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.HOST }}
+          host: ${{ secrets.DROPLET_HOST }}
           username: root
-          key: ${{ secrets.SSH_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
           script: |
+            echo "🔗 Connected to server"
+            
             cd /var/www/RubyFirst
+            echo "📥 Pulling latest code..."
             git pull origin main
-            sudo systemctl restart RubyFirst
+            
+            echo "💎 Installing dependencies..."
+            bundle install --deployment --without development test
+            
+            echo "🗄️ Running migrations..."
+            RAILS_ENV=production bundle exec rails db:migrate
+            
+            echo "🎨 Compiling assets..."
+            RAILS_ENV=production bundle exec rails assets:precompile
+            
+            echo "♻️ Restarting application..."
+            sudo systemctl restart rubyfirst
+            
+            echo "✅ Checking service status..."
+            sudo systemctl is-active rubyfirst && echo "Service is running!" || echo "Service failed to start!"
