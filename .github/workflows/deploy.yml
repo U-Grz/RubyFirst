@@ -13,6 +13,6 @@ jobs:
           username: root
           key: ${{ secrets.SSH_KEY }}
           script: |
-            cd /var/www/hello_world
+            cd /var/www/RubyFirst
             git pull origin main
-            sudo systemctl restart hello_world
+            sudo systemctl restart RubyFirst
